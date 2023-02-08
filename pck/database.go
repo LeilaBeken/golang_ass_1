@@ -9,8 +9,11 @@ type Item struct {
 type User struct {
     Name string
     Password string
-    Items []Item
 }
+
+type ItemService struct {
+	Items []Item
+ }
 
 type Database struct {
     Users []User

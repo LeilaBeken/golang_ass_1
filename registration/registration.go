@@ -1,7 +1,7 @@
 package registration
 
 import (
-	"pck"
+	"github.com/LeilaBeken/golang_ass_1/pck"
 )
 
 type Registration struct {
@@ -10,6 +10,14 @@ type Registration struct {
 	Age        int
 }
 
-func (s *Database) Register(name string, password string) {
-    s.Users = append(s.Users, User{Name: name, Password: password})
+type db struct {
+	*pck.Database
+}
+
+func (d *db) Register(name string, password string) {
+	d.Users = append(d.Users, pck.User{Name: name, Password: password})
+}
+
+func (d *db) RegisterItem(item pck.Item) {
+	d.Items = append(d.Items, item)
 }

@@ -1,5 +1,3 @@
-module golang_ass_1
+module github.com/LeilaBeken/golang_ass_1
 
 go 1.19
-
-require github.com/lib/pq v1.10.7 // indirect
