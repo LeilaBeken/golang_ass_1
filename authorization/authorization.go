@@ -2,15 +2,12 @@ package authorization
 
 import (
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/LeilaBeken/golang_ass_1/pck"
 )
 
-var jwtKey = []byte("secret_key")
-
-var users = map[string]string{}
-
-type Authorization struct {
-	User    string 
-	Password string 
+type Users struct{
+	*pck.DatabaseUsers
 }
 
 
@@ -19,12 +16,12 @@ func CheckPasswordHash(password, hash string) bool {
     return err == nil
 }
 
-func (a *Authorization) SignIn(user, password string) string{
+func (users *Users) SignIn(user, password string) string{
 	token := "token"
-
-	if a.User == user && a.Password == password{
-		return token
-	} else{
-		return "not authorized"
+	for _, u := range users.Users{
+		if u.Name == user && u.Password == password{
+			return token
+		}
 	}
+	return token
 }
