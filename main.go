@@ -8,9 +8,10 @@ import (
 	"os"
 	"time"
 
+	auth "github.com/LeilaBeken/golang_ass_1/authorization"
 	pck "github.com/LeilaBeken/golang_ass_1/pck"
+	regist "github.com/LeilaBeken/golang_ass_1/registration"
 	jwt "github.com/dgrijalva/jwt-go"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type database struct {
@@ -18,14 +19,10 @@ type database struct {
 	users *pck.DatabaseUsers
 }
 
-type accessToItems interface{
-	*pck.AccessToItems
-}
+var db database = database{items: &pck.DatabaseItems{Items: []pck.Item{}}, users: &pck.DatabaseUsers{Users: []pck.User{}}}
 
-// used to encrypt/decrypt JWT tokens. Change it to yours.
-var jwtTokenSecret = "abc123456def"
-
-var list []string
+// used to encrypt/decrypt JWT tokens.
+var jwtTokenSecret = "secretjwt"
 
 const dashBoardPage = `<html><body>
 
@@ -35,8 +32,13 @@ const dashBoardPage = `<html><body>
 <p>Either your JSON Web token has expired or you've logged out! <a href="/login">Login</a></p>
 {{end}}
 
-<button id="by-rating">Sort By Ratings</button>
-<button id="by-price"> Sort By Price</button>
+<form>
+    <input type="submit" name = "by-rating" value="Sort By Ratings">
+</form><br>
+<form>
+    <input type="submit" name = "by-price" value="Sort By Price">
+</form><br>
+<br>
 {{.list}}
 	
 </body></html>`
@@ -57,6 +59,26 @@ const logUserPage = `<html><body>
   <input type="submit" name="Login" value="Let me in!">
   {{end}}
   </form>
+  <br>
+  <form action="/regist">
+    <input type="submit" value="Registration" />
+  </form>
+
+  </body></html>`
+
+const RegistUserPage = `<html><body>
+  {{if .RegistError}}<p style="color:red">Username is not available</p>{{end}}
+
+  <form method="post" action="/regist">
+  <label>Username:</label>
+  <input type="text" name="Username"><br>
+
+  <label>Password:</label>
+  <input type="password" name="Password"><br>
+
+  <input type="submit" name="" value="Register">
+  </form>
+  <br>
   </body></html>`
 
 func DashBoardPageHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,9 +89,18 @@ func DashBoardPageHandler(w http.ResponseWriter, r *http.Request) {
 	// check if user already logged in
 	username, _ := ExtractTokenUsername(r)
 
+
 	if username != "" {
 		conditionsMap["Username"] = username
-		conditionsMap["list"] = pck.GetListOfItems()
+	}
+	conditionsMap["list"] = db.items.GetListOfItems()
+	if r.FormValue("by-rating") != ""{
+		db.items.FilterByRatings(true)
+		conditionsMap["list"] = db.items.GetListOfItems()
+	}
+	if r.FormValue("by-price") != ""{
+		db.items.FilterByPrice(true)
+		conditionsMap["list"] = db.items.GetListOfItems()
 	}
 
 	if err := dashboardTemplate.Execute(w, conditionsMap); err != nil {
@@ -81,22 +112,12 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	conditionsMap := map[string]interface{}{}
 
-	// check if user already logged in
-	username, _ := ExtractTokenUsername(r)
-
-	if username != "" { // user already logged in!
-		conditionsMap["Username"] = username
-		conditionsMap["LoginError"] = false
-	}
-
 	// verify username and password
 	if r.FormValue("Login") != "" && r.FormValue("Username") != "" {
 		username := r.FormValue("Username")
 		password := r.FormValue("Password")
 
-		hashedPasswordFromDatabase := []byte("$2a$10$4Yhs5bfGgp4vz7j6ScujKuhpRTA4l4OWg7oSukRbyRN7dc.C1pamu")
-
-		if err := bcrypt.CompareHashAndPassword(hashedPasswordFromDatabase, []byte(password)); err != nil {
+		if  !auth.SignIn(username, password, db.users){
 			log.Println("Either username or password is wrong")
 			conditionsMap["LoginError"] = true
 		} else {
@@ -132,6 +153,61 @@ func LoginPageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 }
+
+func RegisterPageHandler(w http.ResponseWriter, r *http.Request) {
+
+	conditionsMap := map[string]interface{}{}
+
+	// check if user already logged in
+	username, _ := ExtractTokenUsername(r)
+
+	if username != "" { // user already logged in!
+		conditionsMap["Username"] = username
+		conditionsMap["LoginError"] = false
+	}
+
+	// verify username and password
+	if r.FormValue("Password") != "" && r.FormValue("Username") != "" {
+		username := r.FormValue("Username")
+		password := r.FormValue("Password")
+
+		if  !regist.Register(username, password, db.users){
+			log.Println("Username is not available")
+			conditionsMap["LoginError"] = true
+		} else {
+			log.Println("Registered:", username, password)
+			conditionsMap["Username"] = username
+			conditionsMap["LoginError"] = false
+
+			// create a new JSON Web Token and redirect to dashboard
+			tokenString, err := createToken(username)
+
+			if err != nil {
+				log.Println(err)
+				os.Exit(1)
+			}
+
+			// create the cookie for client(browser)
+			expirationTime := time.Now().Add(1 * time.Hour) // cookie expired after 1 hour
+
+			cookie := &http.Cookie{
+				Name:    "token",
+				Value:   tokenString,
+				Expires: expirationTime,
+			}
+
+			http.SetCookie(w, cookie)
+
+			http.Redirect(w, r, "/dashboard", http.StatusFound)
+		}
+
+	}
+
+	if err := registerUserTemplate.Execute(w, conditionsMap); err != nil {
+		log.Println(err)
+	}
+}
+
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -191,11 +267,18 @@ func ExtractTokenUsername(r *http.Request) (string, error) {
 
 var dashboardTemplate = template.Must(template.New("").Parse(dashBoardPage))
 var logUserTemplate = template.Must(template.New("").Parse(logUserPage))
+var registerUserTemplate = template.Must(template.New("").Parse(RegistUserPage))
 
 func main() {
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item1", Price: 100, Rating: 5})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item2", Price: 200, Rating: 4})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item1", Price: 100, Rating: 3})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item4", Price: 600, Rating: 1})
+	regist.Register("leila", "beken", db.users)
 	fmt.Println("Server starting, point your browser to localhost:8080/login to start")
 	http.HandleFunc("/login", LoginPageHandler)
 	http.HandleFunc("/dashboard", DashBoardPageHandler)
 	http.HandleFunc("/logout", LogoutHandler)
+	http.HandleFunc("/regist", RegisterPageHandler)
 	http.ListenAndServe(":8080", nil)
 }

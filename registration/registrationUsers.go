@@ -16,14 +16,20 @@ func HashPassword(password string) (string, error) {
     return string(bytes), err
 }
 
-type dbUsers struct {
-	*pck.DatabaseUsers
+func checkUsers(name string, d *pck.DatabaseUsers) bool{
+	for _, user := range d.Users{
+		if user.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
-func (d *dbUsers) Register(name string, password string) {
+func Register(name string, password string, d *pck.DatabaseUsers) bool{
 	pass, err := HashPassword(password)
-	if err != nil {
-		return
+	if err != nil || checkUsers(name, d){
+		return false
 	}
 	d.Users = append(d.Users, pck.User{Name: name, Password: pass})
+	return true
 }

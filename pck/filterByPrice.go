@@ -1,18 +1,10 @@
-package itemfilters
+package pck
 
-import(
-	"github.com/LeilaBeken/golang_ass_1/pck"
-)
-
-type items struct{
-	*pck.DatabaseItems
-}
-
-func (il *items) FilterByRatings(ascending bool) {   
+func (il *DatabaseItems) FilterByPrice(ascending bool){   
 	if ascending {
 		for i := 0; i < len(il.Items); i++ {
 			for j := i + 1; j < len(il.Items); j++ {
-				if il.Items[i].Rating > il.Items[j].Rating {
+				if il.Items[i].Price > il.Items[j].Price {
 					il.Items[i], il.Items[j] = il.Items[j], il.Items[i]
 				}
 			}
@@ -20,7 +12,7 @@ func (il *items) FilterByRatings(ascending bool) {
 	} else {
 		for i := 0; i < len(il.Items); i++ {
 			for j := i + 1; j < len(il.Items); j++ {
-				if il.Items[i].Rating < il.Items[j].Rating {
+				if il.Items[i].Price < il.Items[j].Price {
 					il.Items[i], il.Items[j] = il.Items[j], il.Items[i]
 				}
 			}
