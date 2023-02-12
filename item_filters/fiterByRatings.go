@@ -4,11 +4,26 @@ import(
 	"github.com/LeilaBeken/golang_ass_1/pck"
 )
 
+type items struct{
+	*pck.DatabaseItems
+}
 
-func (s *items) FilterByRatings(rating float64) []pck.Item {   
-	result := make([]pck.Item, 0)
-	for _, item := range s.Items {      
-		if item.Rating <= rating {result = append(result, item)}
-	}   
-	return result
+func (il *items) FilterByRatings(ascending bool) {   
+	if ascending {
+		for i := 0; i < len(il.Items); i++ {
+			for j := i + 1; j < len(il.Items); j++ {
+				if il.Items[i].Rating > il.Items[j].Rating {
+					il.Items[i], il.Items[j] = il.Items[j], il.Items[i]
+				}
+			}
+		}
+	} else {
+		for i := 0; i < len(il.Items); i++ {
+			for j := i + 1; j < len(il.Items); j++ {
+				if il.Items[i].Rating < il.Items[j].Rating {
+					il.Items[i], il.Items[j] = il.Items[j], il.Items[i]
+				}
+			}
+		}
+	}
  }

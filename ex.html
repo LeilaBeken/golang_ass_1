@@ -1,0 +1,13 @@
+<html><body>
+
+    {{if .Username}}
+    <p><b>{{.Username}}</b>, welcome to your dashboard! <a href="/logout">Logout!</a></p>
+    {{else}}
+    <p>Either your JSON Web token has expired or you've logged out! <a href="/login">Login</a></p>
+    {{end}}
+
+    <button id="by-rating">Sort By Ratings</button>
+    <button id="by-price"> Sort By Price</button>
+    {{.list}}
+        
+</body></html>

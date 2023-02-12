@@ -19,9 +19,9 @@ func CheckPasswordHash(password, hash string) bool {
 func (users *Users) SignIn(user, password string) string{
 	token := "token"
 	for _, u := range users.Users{
-		if u.Name == user && u.Password == password{
+		if u.Name == user && CheckPasswordHash(password, u.Password){
 			return token
 		}
 	}
-	return token
+	return "not authorized"
 }
