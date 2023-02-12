@@ -11,6 +11,7 @@ import (
 	auth "github.com/LeilaBeken/golang_ass_1/authorization"
 	pck "github.com/LeilaBeken/golang_ass_1/pck"
 	regist "github.com/LeilaBeken/golang_ass_1/registration"
+	search "github.com/LeilaBeken/golang_ass_1/Item_search"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -31,11 +32,12 @@ const dashBoardPage = `<html><body>
 {{else}}
 <p>Either your JSON Web token has expired or you've logged out! <a href="/login">Login</a></p>
 {{end}}
-
 <form>
-    <input type="submit" name = "by-rating" value="Sort By Ratings">
-</form><br>
+<input type="text" name="search" value="search">
+<input type="submit" name ="Search" placeholder="Search">
+<form><br>
 <form>
+    <input type="submit" name = "by-rating" value="Sort By Ratings"><br>
     <input type="submit" name = "by-price" value="Sort By Price">
 </form><br>
 <br>
@@ -101,6 +103,10 @@ func DashBoardPageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("by-price") != ""{
 		db.items.FilterByPrice(true)
 		conditionsMap["list"] = db.items.GetListOfItems()
+	}
+	if r.FormValue("search") != "" && r.FormValue("Search") != ""{
+		searchValue := r.FormValue("search")
+		conditionsMap["list"] = search.ItemSearch(searchValue, db.items)
 	}
 
 	if err := dashboardTemplate.Execute(w, conditionsMap); err != nil {
