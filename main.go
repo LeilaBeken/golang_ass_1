@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	auth "github.com/LeilaBeken/golang_ass_1/authorization"
+	search "github.com/LeilaBeken/golang_ass_1/item_search"
 	pck "github.com/LeilaBeken/golang_ass_1/pck"
+	rate "github.com/LeilaBeken/golang_ass_1/ratings"
 	regist "github.com/LeilaBeken/golang_ass_1/registration"
-	search "github.com/LeilaBeken/golang_ass_1/Item_search"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -33,14 +35,20 @@ const dashBoardPage = `<html><body>
 <p>Either your JSON Web token has expired or you've logged out! <a href="/login">Login</a></p>
 {{end}}
 <form>
-<input type="text" name="search" value="search">
-<input type="submit" name ="Search" placeholder="Search">
+<input type="text" name="search" placeholder="Search">
+<input type="submit" name ="Search" value="Search">
+<form><br>
+<form>
+<input type="text" name="item" placeholder="Pick item">
+<input type="text" name="rating" placeholder="Rate item">
+<input type="submit" name ="Rate" value="Rate">
 <form><br>
 <form>
     <input type="submit" name = "by-rating" value="Sort By Ratings"><br>
     <input type="submit" name = "by-price" value="Sort By Price">
 </form><br>
 <br>
+<ul>
 {{.list}}
 	
 </body></html>`
@@ -107,6 +115,17 @@ func DashBoardPageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("search") != "" && r.FormValue("Search") != ""{
 		searchValue := r.FormValue("search")
 		conditionsMap["list"] = search.ItemSearch(searchValue, db.items)
+	}
+	if r.FormValue("rating") != "" && r.FormValue("Rate") != "" && r.FormValue("item")!=""{
+		rateValue := r.FormValue("rating")
+		item := r.FormValue("item")
+		x, err := strconv.Atoi(rateValue)
+		if err != nil {
+			fmt.Println("Error during conversion")
+			return
+		}
+		rate.GiveRating(x, item, db.items)
+		conditionsMap["list"] = db.items.GetListOfItems()
 	}
 
 	if err := dashboardTemplate.Execute(w, conditionsMap); err != nil {
@@ -276,10 +295,10 @@ var logUserTemplate = template.Must(template.New("").Parse(logUserPage))
 var registerUserTemplate = template.Must(template.New("").Parse(RegistUserPage))
 
 func main() {
-	db.items.Items = append(db.items.Items, pck.Item{Name: "item1", Price: 100, Rating: 5})
-	db.items.Items = append(db.items.Items, pck.Item{Name: "item2", Price: 200, Rating: 4})
-	db.items.Items = append(db.items.Items, pck.Item{Name: "item1", Price: 100, Rating: 3})
-	db.items.Items = append(db.items.Items, pck.Item{Name: "item4", Price: 600, Rating: 1})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item1", Price: 100, Rating: 5, HaveRated: 1})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item2", Price: 200, Rating: 4, HaveRated: 1})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item3", Price: 100, Rating: 3, HaveRated: 1})
+	db.items.Items = append(db.items.Items, pck.Item{Name: "item4", Price: 600, Rating: 1, HaveRated: 1})
 	regist.Register("leila", "beken", db.users)
 	fmt.Println("Server starting, point your browser to localhost:8080/login to start")
 	http.HandleFunc("/login", LoginPageHandler)

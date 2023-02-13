@@ -1,13 +1,17 @@
 package ratings
 
-import(
+import (
+	"fmt"
+
 	"github.com/LeilaBeken/golang_ass_1/pck"
 )
 
-type item struct{
-	*pck.Item
-}
-
-func (s *item) GiveRating(rating int) {   
-	s.Rating = rating
+func GiveRating(rating int, item string, db *pck.DatabaseItems){   
+	for _, it := range db.Items{
+		if it.Name == item {
+			it.ChangeRating((it.Rating * it.HaveRated + rating)/(it.HaveRated+1))
+			it.HaveRated++
+			fmt.Println("Have rated item, new rating:", it.Rating)
+		}
+	}
 }

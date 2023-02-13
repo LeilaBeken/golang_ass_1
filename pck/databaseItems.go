@@ -6,6 +6,7 @@ type Item struct {
 	Name   string
 	Price  int
 	Rating int
+	HaveRated int 
 }
 type DatabaseItems struct {
 	Items []Item
@@ -23,4 +24,8 @@ func (items *DatabaseItems) GetListOfItems() []string {
 		list = append(list, fmt.Sprintf("Name: %s, Price: %d, Rating: %d ", item.Name, item.Price, item.Rating))
 	}
 	return list
+}
+
+func (item *Item) ChangeRating(rating int){
+	item.Rating = rating
 }
