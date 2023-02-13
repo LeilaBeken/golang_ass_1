@@ -125,6 +125,9 @@ func DashBoardPageHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rate.GiveRating(x, item, db.items)
+		for _, i := range db.items.GetListOfItems(){
+			fmt.Println(i)
+		}
 		conditionsMap["list"] = db.items.GetListOfItems()
 	}
 
