@@ -47,8 +47,6 @@ const dashBoardPage = `<html><body>
     <input type="submit" name = "by-rating" value="Sort By Ratings"><br>
     <input type="submit" name = "by-price" value="Sort By Price">
 </form><br>
-<br>
-<ul>
 {{.list}}
 	
 </body></html>`
