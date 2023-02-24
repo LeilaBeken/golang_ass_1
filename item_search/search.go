@@ -1,18 +1,24 @@
 package itemsearch
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/LeilaBeken/golang_ass_1/pck"
+	"net/http"
+	"text/template"
+	db "github.com/LeilaBeken/golang_ass_1/database"
+	pck "github.com/LeilaBeken/golang_ass_1/pck"
 )
 
-func ItemSearch(it string, items *pck.DatabaseItems) []string {
-	var list []string
-	for _, item := range items.Items {
-		if strings.Contains(item.Name, it) {
-			list = append(list, fmt.Sprintf("Name: %s, Price: %d, Rating: %d ", item.Name, item.Price, item.Rating))
-		}
+func Search(writer http.ResponseWriter, request *http.Request) {
+	html, err := template.ParseFiles("template/search.html")
+	db.CheckError(err)
+	search := request.FormValue("search")
+	products := pck.GetProductsByName(search)
+	var data = struct {
+		Search   string
+		Products []pck.Product
+	}{
+		Search:   search,
+		Products: products,
 	}
-	return list
+	err = html.Execute(writer, data)
+	db.CheckError(err)
 }

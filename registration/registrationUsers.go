@@ -1,35 +1,33 @@
 package registration
 
 import (
-	"github.com/LeilaBeken/golang_ass_1/pck"
+	"net/http"
+
+	pck "github.com/LeilaBeken/golang_ass_1/pck"
+	"github.com/twinj/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Registration struct {
-	Name       string
-	SecondName string
-	Age        int
-}
-
-func HashPassword(password string) (string, error) {
+func HashPassword(password string) ([]byte, error) {
     bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-    return string(bytes), err
+    return bytes, err
 }
 
-func checkUsers(name string, d *pck.DatabaseUsers) bool{
-	for _, user := range d.Users{
-		if user.Name == name {
-			return true
-		}
-	}
-	return false
-}
 
-func Register(name string, password string, d *pck.DatabaseUsers) bool{
-	pass, err := HashPassword(password)
-	if err != nil || checkUsers(name, d){
-		return false
+func CreateAccount(writer http.ResponseWriter, request *http.Request) {
+	login := request.FormValue("login")
+	password, err := HashPassword(request.FormValue("password"))
+	name := request.FormValue("nickname")
+	id := uuid.New(password)
+
+	if err != nil{
+		http.Redirect(writer, request, "/error", http.StatusFound) 
+		return 
 	}
-	d.Users = append(d.Users, pck.User{Name: name, Password: pass})
-	return true
+
+	if pck.IsEmailFree(login) {
+		pck.CreateUser(id.String(), name, login, string(password), 0)
+		http.Redirect(writer, request, "/home", http.StatusFound)
+	}
+	http.Redirect(writer, request, "/error", http.StatusFound)
 }
