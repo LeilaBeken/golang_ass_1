@@ -42,6 +42,7 @@ type Product struct {
     Description string `json:"description"`
     Price       int    `json:"price"`
     Category    string `json:"category"`
+    Rating        int    `json:"rating"`
 }
 
 func (p *Product) GetByID(id uint) error {

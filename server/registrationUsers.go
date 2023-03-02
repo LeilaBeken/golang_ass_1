@@ -9,12 +9,12 @@ import (
 	md "github.com/LeilaBeken/golang_ass_1/models"
 )
 
-func HashPassword(password string) ([]byte, error) {
+func hashPassword(password string) ([]byte, error) {
     bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
     return bytes, err
 }
 
-func Register(c *gin.Context) {
+func register(c *gin.Context) {
     // Parse the request body
     var input struct {
         Username string `json:"username" binding:"required"`
@@ -27,7 +27,7 @@ func Register(c *gin.Context) {
     }
 
     // Hash the password
-    hashedPassword, err := HashPassword(input.Password)
+    hashedPassword, err := hashPassword(input.Password)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return

@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Login(c *gin.Context) {
+func login(c *gin.Context) {
 	// Parse the request body
 	var input struct {
 		Username string `json:"username" binding:"required"`
